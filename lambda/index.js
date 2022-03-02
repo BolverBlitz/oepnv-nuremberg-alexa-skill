@@ -62,22 +62,31 @@ const CheckElevatorHandler = {
     async handle(handlerInput) {
         try {
             let DisturbancesArray = [];
+            let DisturbancesArrayCard = [];
+            let [SimpleCardTitleOutput, SimpleCardContentOutput] = ["",""]
             const { disturbances } = await vgn.getVagWebpageDisturbances()
             disturbances.Aufzugsstörungen.map(disturbance => {
                 DisturbancesArray.push(`Der Aufzug ${disturbance.Where.replace("<>", "zu")} an der Haltestelle ${capitalizeFirstLetter(disturbance.Station)}`)
+                DisturbancesArrayCard.push(`${capitalizeFirstLetter(disturbance.Station)}: ${disturbance.Where}`)
             });
             
             let speakOutput = "";
             if(disturbances.Aufzugsstörungen.length > 1){
                 speakOutput = `Die folgenden ${disturbances.Aufzugsstörungen.length} Aufzüge sind zurzeit Defekt. ${DisturbancesArray.join(". ")}`
+                SimpleCardTitleOutput = `Die folgenden ${disturbances.Aufzugsstörungen.length} Aufzüge sind zurzeit Defekt:`
+                SimpleCardContentOutput = `${DisturbancesArrayCard.join("\n")}`
             }else if(disturbances.Aufzugsstörungen.length > 0){
                 speakOutput = `Der Aufzug ${disturbances[0].Where.replace("<>", "zu")} an der Haltestelle ${capitalizeFirstLetter(disturbances[0].Station)} ist defekt`
+                SimpleCardTitleOutput = `Es ist zurzeit 1 Aufzug Defekt:`
+                SimpleCardContentOutput = `${capitalizeFirstLetter(disturbances[0].Station)}: ${disturbances[0].Where}`
             }else{
                 speakOutput = `Es sind aktuell keine Aufzüge defekt`
+                SimpleCardTitleOutput = `Es sind aktuell keine Aufzüge defekt.`
             }
 
             return handlerInput.responseBuilder
                 .speak(speakOutput)
+                .withSimpleCard(SimpleCardTitleOutput, SimpleCardContentOutput)
                 .getResponse();
         }catch(e){
             const speakOutput = 'Ich bin in einen großen Fehler gelaufen: ' + e.message;
@@ -133,11 +142,12 @@ const LaunchRequestHandler = {
         return Alexa.getRequestType(handlerInput.requestEnvelope) === 'LaunchRequest';
     },
     handle(handlerInput) {
-        const speakOutput = 'Welcome, you can say Hello or Help. Which would you like to try?';
+        const speakOutput = 'ÖPNV Nürnberg gestartet';
+        const promptOutput = `Ich warte auf deine Frage.`
 
         return handlerInput.responseBuilder
             .speak(speakOutput)
-            .reprompt(speakOutput)
+            .reprompt(promptOutput)
             .getResponse();
     }
 };
